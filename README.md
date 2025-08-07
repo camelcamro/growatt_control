@@ -1,4 +1,4 @@
-# growatt\_control.sh
+# growatt\_control (shell script)
 
 **Version:** 1.0.0 (Parser v1.0.0)
 
