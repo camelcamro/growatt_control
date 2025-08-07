@@ -2,7 +2,7 @@
 # growatt_control.sh - Dynamic Growatt SPF5000 Tool (100% runtime mapping)
 
 DEBUG=0
-VERSION="1.0.1 - 2025-08-06"
+VERSION="1.0.0 - 2025-08-06"
 SCRIPTNAME="$(basename "$0")"
 
 show_help() {
