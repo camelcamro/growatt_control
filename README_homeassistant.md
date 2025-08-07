@@ -1,37 +1,34 @@
-Home Assistant Integration Guide
-Use growatt_control.sh from Home Assistant via shell_command to read and write inverter parameters.
+# Home Assistant Integration Guide
 
-⚠️ Important:
-Home Assistant’s limited shell may lack needed utilities. We recommend invoking the script over SSH to a host that has all required tools installed (bash, curl, sed, grep, awk, sort, uniq, wc).
+Use `growatt_control.sh` from Home Assistant via `shell_command` to read and write inverter parameters.
 
-Prerequisites
-growatt_control.sh installed on a remote Linux host (e.g. Raspberry Pi) and executable.
+> **⚠️ Important:** Home Assistant’s built‑in shell may lack utilities. We recommend invoking the script over SSH to a host with all required tools (`bash`, `curl`, `sed`, `grep`, `awk`, `sort`, `uniq`, `wc`).
 
-These tools must be present on that host:
+---
 
-bash
+## Prerequisites
 
-curl
+1. **growatt\_control.sh** installed on a remote Linux host (e.g., Raspberry Pi).
+2. Required tools on that host:
 
-sed
+   * `bash`
+   * `curl`
+   * `sed`
+   * `grep`
+   * `awk`
+   * `sort`, `uniq`, `wc`
+3. SSH access from the Home Assistant server to the remote host. Configure key‑based auth or store credentials securely.
 
-grep
+---
 
-awk
+## Configuration (`configuration.yaml`)
 
-sort, uniq, wc
+Add the following to your Home Assistant configuration:
 
-SSH access from Home Assistant’s host to that remote machine, via key-based auth or securely stored credentials.
-
-Configuration (configuration.yaml)
-Define two shell commands:
-
-yaml
-Kopieren
-Bearbeiten
+```yaml
 shell_command:
   growatt_read: >-
-    ssh -o "StrictHostKeyChecking=no" root@<REMOTE_HOST> \
+    ssh -o "StrictHostKeyChecking=no" root@localhost \
       "/home/growatt/growatt_control.sh \
       --action read \
       --method {{ method }} \
@@ -41,7 +38,7 @@ shell_command:
       --password {{ password }}"
 
   growatt_write: >-
-    ssh -o "StrictHostKeyChecking=no" root@<REMOTE_HOST> \
+    ssh -o "StrictHostKeyChecking=no" root@localhost \
       "/home/growatt/growatt_control.sh \
       --action write \
       --method {{ method }} \
@@ -50,61 +47,69 @@ shell_command:
       --user {{ user }} \
       --password {{ password }} \
       --value {{ value }}"
-Replace root@<REMOTE_HOST> with your SSH user and host.
+```
 
-Adjust the path to growatt_control.sh if yours differs.
+* **Replace**:
 
-When calling the service, fill in template variables ({{ method }}, {{ serial }}, etc.).
+  * `root@localhost` with your actual SSH user and host.
+  * Paths to `growatt_control.sh` if different.
+  * Template variables (`{{ method }}`, `{{ serial }}`, etc.) with your own input when calling the service.
 
-Service Calls
-Read a Parameter
-yaml
-Kopieren
-Bearbeiten
-service: shell_command.growatt_read
-data:
-  method: readStorageParam
-  serial: NUK2NYQ02V
-  type: storage_spf5000_buzzer
-  user: you@example.com
-  password: YOURPASS
-Write a Parameter
-yaml
-Kopieren
-Bearbeiten
-service: shell_command.growatt_write
-data:
-  method: storageSPF5000Set
-  serial: NUK2NYQ02V
-  type: storage_spf5000_buzzer
-  user: you@example.com
-  password: YOURPASS
-  value: 1
-You can call these from automations, scripts, or the Developer Tools → Services panel.
+---
 
-Exposing as a Command-Line Sensor
-To surface a Growatt parameter as a sensor:
+## Using Shell Commands
 
-yaml
-Kopieren
-Bearbeiten
+Call the shell commands via Home Assistant services:
+
+1. **Read a parameter**
+
+   ```yaml
+   service: shell_command.growatt_read
+   data:
+     method: readStorageParam
+     serial: NUK2NYQ02V
+     type: storage_spf5000_buzzer
+     user: you@example.com
+     password: YOURPASS
+   ```
+
+2. **Write a parameter**
+
+   ```yaml
+   service: shell_command.growatt_write
+   data:
+     method: storageSPF5000Set
+     serial: NUK2NYQ02V
+     type: storage_spf5000_buzzer
+     user: you@example.com
+     password: YOURPASS
+     value: 1
+   ```
+
+You can invoke these services from automations, scripts, or the Developer Tools → Services panel.
+
+---
+
+## Example: Command-Line Sensor
+
+To expose a parameter as a sensor in Home Assistant:
+
+```yaml
 sensor:
   - platform: command_line
     name: Growatt Buzzer State
-    command: >-
-      ssh -o "StrictHostKeyChecking=no" root@<REMOTE_HOST> \
-        "/home/growatt/growatt_control.sh \
-         --action read \
-         --method readStorageParam \
-         --serial NUK2NYQ02V \
-         --type storage_spf5000_buzzer \
-         --user you@example.com \
-         --password YOURPASS"
-    scan_interval: 300
+    command: >
+      ssh -o "StrictHostKeyChecking=no" root@localhost \
+        "/home/growatt/growatt_control.sh --action read --method readStorageParam --serial NUK2NYQ02V --type storage_spf5000_buzzer --user you@example.com --password YOURPASS"
+    scan_interval: 300  # poll every 5 minutes
     value_template: "{{ value }}"
-Security Notes
-Store SSH credentials and inverter passwords securely (consider Home Assistant’s secrets.yaml or the keyring integration).
+```
 
-Limit SSH access to a dedicated, low-privilege user.
+---
 
-Enjoy seamless Growatt management through Home Assistant!
+## Security Notes
+
+* Store SSH keys and passwords securely (e.g., use `keyring` integration or encrypted secrets).
+* Limit SSH access to a dedicated user with minimal permissions.
+
+Enjoy seamless Growatt inverter management from Home Assistant!
